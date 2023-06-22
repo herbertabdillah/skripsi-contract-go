@@ -103,6 +103,9 @@ func UpdateCourseResult(c router.Context) (interface{}, error) {
 			foundResult = transcriptResult
 			foundResult.Score = score
 			foundResult.Pass = isPass
+			foundResult.CourseResultId = courseResultId
+			foundResult.Year = courseResult.Year
+			foundResult.Semester = courseResult.Semester
 		} else {
 			courseRes, err := c.State().Get("Course."+transcriptResult.CourseId, &state.Course{})
 			if err != nil {
@@ -111,7 +114,7 @@ func UpdateCourseResult(c router.Context) (interface{}, error) {
 			course := courseRes.(state.Course)
 
 			totalTranscriptCredit += course.Credit
-			totalTranscriptScore += (float64(course.Credit) * transcript.Score)
+			totalTranscriptScore += (float64(course.Credit) * transcriptResult.Score)
 		}
 	}
 

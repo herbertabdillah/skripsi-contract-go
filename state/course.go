@@ -23,5 +23,5 @@ type CourseResult struct {
 	StudentId    string                `json:"student_id,omitempty"`
 	CoursePlanId string                `json:"course_plan_id,omitempty"`
 	Score        float64               `json:"score,omitempty"`
-	Result       []CourseSemeterResult `json:"array"`
+	Result       []CourseSemeterResult `json:"result"`
 }

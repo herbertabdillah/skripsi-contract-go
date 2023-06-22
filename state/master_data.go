@@ -6,9 +6,10 @@ type Faculty struct {
 }
 
 type Department struct {
-	Id        string `json:"id,omitempty"`
-	FacultyId string `json:"faculty_id,omitempty"`
-	Name      string `json:"name,omitempty"`
+	Id        string   `json:"id,omitempty"`
+	FacultyId string   `json:"faculty_id,omitempty"`
+	Name      string   `json:"name,omitempty"`
+	CourseIds []string `json:"course_ids,omitempty"`
 }
 
 type Course struct {

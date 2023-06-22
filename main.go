@@ -38,7 +38,8 @@ func NewCC() *router.Chaincode {
 		Query(`Course:getCoursePlan`, contract.GetCoursePlan, param.String("id")).
 		Query(`Course:getCourseResult`, contract.GetCourseResult, param.String("id")).
 		// Graduation
-		Query(`Graduation:getTranscript`, contract.GetTranscript, param.String("id"))
+		Query(`Graduation:getTranscript`, contract.GetTranscript, param.String("id")).
+		Query(`Graduation:graduate`, contract.Graduate, param.String("id"))
 
 	return router.NewChaincode(r)
 }
