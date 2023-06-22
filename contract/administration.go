@@ -47,6 +47,24 @@ func EndYear(c router.Context) (interface{}, error) {
 
 	courseYear.Status = "end"
 
+	if semester == "odd" {
+		studentYearRes, _ := c.State().Get("StudentYear."+strconv.Itoa(year-7), &state.StudentYear{})
+		if studentYearRes != nil {
+			studentYear := studentYearRes.(state.StudentYear)
+			for _, studentId := range studentYear.StudentIds {
+				studentRes, err := c.State().Get("Student."+studentId, &state.Student{})
+				if err != nil {
+					return nil, err
+				}
+				student := studentRes.(state.Student)
+				if student.Status == "active" {
+					student.Status = "drop_out"
+					c.State().Put("Student."+studentId, student)
+				}
+			}
+		}
+	}
+
 	return courseYear, c.State().Put(key, courseYear)
 }
 

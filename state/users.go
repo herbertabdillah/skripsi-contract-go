@@ -15,3 +15,8 @@ type Student struct {
 	Status               string `json:"status,omitempty"`
 	SupervisorLecturerId string `json:"supervisor_lecturer_id,omitempty"`
 }
+
+type StudentYear struct {
+	EntryYear  int      `json:"entry_year,omitempty"`
+	StudentIds []string `json:"student_ids,omitempty"`
+}

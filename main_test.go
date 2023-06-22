@@ -29,6 +29,7 @@ var _ = Describe(`contract`, func() {
 		It("true", func() {
 			var queryResponse peer.Response
 			var department state.Department
+			var student state.Student
 			expectcc.ResponseOk(chaincode.Invoke("MasterData:insertFaculty", "1", "Sains dan Teknologi"))
 			queryResponse = chaincode.Query("MasterData:getFaculty", "1")
 			faculty := expectcc.PayloadIs(queryResponse, &state.Faculty{}).(state.Faculty)
@@ -62,13 +63,13 @@ var _ = Describe(`contract`, func() {
 			Expect(lecturer.Nik).To(Equal("19450002"))
 
 			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "1", "Herbert", "11170910000046", "1", 2017, "active", "2"))
-			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "2", "Soekarno", "11150910000047", "1", 2015, "active", "2"))
+			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "2", "Soekarno", "11100910000047", "1", 2010, "active", "2"))
 			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "3", "Natsir", "11170910000048", "1", 2017, "active", "2"))
 			queryResponse = chaincode.Query("User:getStudent", "2")
-			student := expectcc.PayloadIs(queryResponse, &state.Student{}).(state.Student)
+			student = expectcc.PayloadIs(queryResponse, &state.Student{}).(state.Student)
 			Expect(student.Name).To(Equal("Soekarno"))
-			Expect(student.Nim).To(Equal("11150910000047"))
-			Expect(student.EntryYear).To(Equal(2015))
+			Expect(student.Nim).To(Equal("11100910000047"))
+			Expect(student.EntryYear).To(Equal(2010))
 			Expect(student.Status).To(Equal("active"))
 			queryResponse = chaincode.Query("Graduation:getTranscript", "2")
 			transcript := expectcc.PayloadIs(queryResponse, &state.Transcript{}).(state.Transcript)
@@ -139,7 +140,15 @@ var _ = Describe(`contract`, func() {
 			}))
 
 			expectcc.ResponseError(chaincode.Invoke("Graduation:graduate", "1"))
+
+			queryResponse = chaincode.Query("User:getStudent", "2")
+			student = expectcc.PayloadIs(queryResponse, &state.Student{}).(state.Student)
+			Expect(student.Status).To(Equal("active"))
 			expectcc.ResponseOk(chaincode.Invoke("Administration:endYear", 2017, "odd"))
+			queryResponse = chaincode.Query("User:getStudent", "2")
+			student = expectcc.PayloadIs(queryResponse, &state.Student{}).(state.Student)
+			Expect(student.Status).To(Equal("drop_out"))
+
 			expectcc.ResponseOk(chaincode.Invoke("Administration:startYear", 2018, "even"))
 			expectcc.ResponseOk(chaincode.Invoke("Administration:insertCourseSemester", "4", "2018", "even", "1", "1"))
 			expectcc.ResponseOk(chaincode.Invoke("Course:insertCoursePlan", "2", "2018", "even", "1", "approved", `["4"]`))
@@ -153,6 +162,9 @@ var _ = Describe(`contract`, func() {
 				{CourseResultId: "1", CourseId: "3", Year: 2017, Semester: "odd", Score: 4, Pass: true},
 			}))
 			expectcc.ResponseOk(chaincode.Invoke("Graduation:graduate", "1"))
+			queryResponse = chaincode.Query("User:getStudent", "1")
+			student = expectcc.PayloadIs(queryResponse, &state.Student{}).(state.Student)
+			Expect(student.Status).To(Equal("graduated"))
 		})
 	})
 })

@@ -1,6 +1,8 @@
 package contract
 
 import (
+	"strconv"
+
 	"github.com/herbertabdillah/skripsi-contract-new/state"
 	"github.com/hyperledger-labs/cckit/router"
 )
@@ -44,5 +46,27 @@ func CreateStudent(c router.Context) (interface{}, error) {
 		return nil, err
 	}
 
+	studentYearRes, err := c.State().Get("StudentYear."+strconv.Itoa(entryYear), &state.StudentYear{})
+	var studentYear state.StudentYear
+	if studentYearRes == nil {
+		studentYear = state.StudentYear{EntryYear: entryYear, StudentIds: []string{id}}
+		err = c.State().Insert("StudentYear."+strconv.Itoa(entryYear), studentYear)
+		if err != nil {
+			return nil, err
+		}
+	} else if err == nil {
+		studentYear = studentYearRes.(state.StudentYear)
+		studentYear.StudentIds = append(studentYear.StudentIds, id)
+		err = c.State().Put("StudentYear."+strconv.Itoa(entryYear), studentYear)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
 	return student, c.State().Insert("Student."+id, student)
 }
