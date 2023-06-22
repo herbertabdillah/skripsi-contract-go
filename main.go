@@ -31,7 +31,14 @@ func NewCC() *router.Chaincode {
 		Invoke(`Administration:endYear`, contract.EndYear, param.Int("year"), param.String("semester")).
 		Query(`Administration:getCourseYear`, contract.GetCourseYear, param.Int("year"), param.String("semester")).
 		Invoke(`Administration:insertCourseSemester`, contract.InsertCourseSemester, param.String("id"), param.Int("year"), param.String("semester"), param.String("courseId"), param.String("lecturerId")).
-		Query(`Administration:getCourseSemester`, contract.GetCourseSemester, param.String("id"))
+		Query(`Administration:getCourseSemester`, contract.GetCourseSemester, param.String("id")).
+		// Course
+		Invoke(`Course:insertCoursePlan`, contract.InsertCoursePlan, param.String("id"), param.Int("year"), param.String("semester"), param.String("studentId"), param.String("status"), param.String("courseSemesterIds")).
+		Invoke(`Course:updateCourseResult`, contract.UpdateCourseResult, param.String("courseSemesterId"), param.String("courseResultId"), param.String("score")).
+		Query(`Course:getCoursePlan`, contract.GetCoursePlan, param.String("id")).
+		Query(`Course:getCourseResult`, contract.GetCourseResult, param.String("id")).
+		// Graduation
+		Query(`Graduation:getTranscript`, contract.GetTranscript, param.String("id"))
 
 	return router.NewChaincode(r)
 }

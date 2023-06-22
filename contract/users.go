@@ -38,5 +38,11 @@ func CreateStudent(c router.Context) (interface{}, error) {
 		return nil, err
 	}
 
+	transcript := &state.Transcript{Id: id, StudentId: id, Score: 0, TranscriptResult: []state.TranscriptResult{}}
+	err = c.State().Insert("Transcript."+id, transcript)
+	if err != nil {
+		return nil, err
+	}
+
 	return student, c.State().Insert("Student."+id, student)
 }
