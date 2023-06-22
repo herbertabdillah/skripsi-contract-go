@@ -46,16 +46,24 @@ func CreateCourse(c router.Context) (interface{}, error) {
 	var id, departmentId, name, credit, kind = c.ParamString("id"), c.ParamString("departmentId"), c.ParamString("name"), c.ParamInt("credit"), c.ParamString("kind")
 	course := &state.Course{Id: id, DepartmentId: departmentId, Name: name, Credit: credit, Kind: kind}
 
-	departmentRes, err := c.State().Get("Department."+departmentId, &state.Department{})
-	if err != nil {
-		return nil, err
-	}
-	department := departmentRes.(state.Department)
-	department.CourseIds = append(department.CourseIds, id)
-	err = c.State().Put("Department."+departmentId, department)
+	err := insertCourseToDepartment(c, departmentId, id)
 	if err != nil {
 		return nil, err
 	}
 
 	return course, c.State().Insert("Course."+id, course)
+}
+
+func insertCourseToDepartment(c router.Context, departmentId string, id string) error {
+	departmentRes, err := c.State().Get("Department."+departmentId, &state.Department{})
+	if err != nil {
+		return err
+	}
+	department := departmentRes.(state.Department)
+	department.CourseIds = append(department.CourseIds, id)
+	err = c.State().Put("Department."+departmentId, department)
+	if err != nil {
+		return err
+	}
+	return nil
 }
