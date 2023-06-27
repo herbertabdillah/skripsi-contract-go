@@ -13,3 +13,13 @@ func (r Repository) GetCourse(id string) (*state.Course, error) {
 
 	return &obj, nil
 }
+
+func (r Repository) GetDepartment(id string) (*state.Department, error) {
+	res, err := r.context.State().Get("Department."+id, &state.Department{})
+	if err != nil {
+		return nil, err
+	}
+	obj := res.(state.Department)
+
+	return &obj, nil
+}

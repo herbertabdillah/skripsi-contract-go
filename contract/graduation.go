@@ -3,59 +3,55 @@ package contract
 import (
 	"errors"
 
-	"github.com/herbertabdillah/skripsi-contract-new/state"
 	"github.com/hyperledger-labs/cckit/router"
 )
 
 func Graduate(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	id := c.ParamString("id")
 
-	studentRes, err := c.State().Get("Student."+id, &state.Student{})
+	student, err := cc.Repository.GetStudent(id)
 	if err != nil {
 		return nil, err
 	}
-	student := studentRes.(state.Student)
 
-	departmentRes, err := c.State().Get("Department."+student.DepartmentId, &state.Department{})
+	department, err := cc.Repository.GetDepartment(student.DepartmentId)
 	if err != nil {
 		return nil, err
 	}
-	department := departmentRes.(state.Department)
-	courseIds := department.CourseIds
 
-	transcriptRes, err := c.State().Get("Transcript."+id, &state.Transcript{})
+	transcript, err := cc.Repository.GetTranscript(id)
 	if err != nil {
 		return nil, err
 	}
-	transcript := transcriptRes.(state.Transcript)
 
+	haventDoneCourseIds := department.CourseIds
 	for _, transcriptResult := range transcript.TranscriptResult {
-		if transcriptResult.Pass {
-			for j, courseId := range courseIds {
-				if transcriptResult.CourseId == courseId {
-					copy(courseIds[j:], courseIds[j+1:])     // Shift a[i+1:] left one index.
-					courseIds[len(courseIds)-1] = ""         // Erase last element (write zero value).
-					courseIds = courseIds[:len(courseIds)-1] // Truncate slice.
-				}
-			}
+		if !transcriptResult.Pass {
+			continue
+		}
 
+		for j, courseId := range haventDoneCourseIds {
+			if transcriptResult.CourseId == courseId {
+				copy(haventDoneCourseIds[j:], haventDoneCourseIds[j+1:])               // Shift a[i+1:] left one index.
+				haventDoneCourseIds[len(haventDoneCourseIds)-1] = ""                   // Erase last element (write zero value).
+				haventDoneCourseIds = haventDoneCourseIds[:len(haventDoneCourseIds)-1] // Truncate slice.
+			}
 		}
 	}
 
-	if len(courseIds) == 0 {
-		student.Status = "graduated"
-		err = c.State().Put("Student."+id, student)
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	if len(haventDoneCourseIds) > 0 {
 		return nil, errors.New("haven't done all course")
 	}
-	return student, nil
+
+	student.Status = "graduated"
+
+	return cc.Repository.UpdateStudent(student)
 }
 
 func GetTranscript(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	id := c.ParamString("id")
 
-	return c.State().Get("Transcript."+id, &state.Transcript{})
+	return cc.Repository.GetTranscript(id)
 }
