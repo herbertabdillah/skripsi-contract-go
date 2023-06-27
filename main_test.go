@@ -162,6 +162,7 @@ var _ = Describe(`contract`, func() {
 			queryResponse = chaincode.Query("User:getStudent", "2")
 			student = expectcc.PayloadIs(queryResponse, &state.Student{}).(state.Student)
 			Expect(student.Status).To(Equal("drop_out"))
+			Expect(student.ExitYear).To(Equal(2017))
 
 			expectcc.ResponseOk(chaincode.Invoke("Administration:startYear", 2018, "even"))
 			expectcc.ResponseOk(chaincode.Invoke("Administration:insertCourseSemester", "4", "2018", "even", "1", "1"))
@@ -179,6 +180,7 @@ var _ = Describe(`contract`, func() {
 			queryResponse = chaincode.Query("User:getStudent", "1")
 			student = expectcc.PayloadIs(queryResponse, &state.Student{}).(state.Student)
 			Expect(student.Status).To(Equal("graduated"))
+			Expect(student.ExitYear).To(Equal(2018))
 
 			config.MAX_STUDENT_PER_CLASS = 40
 		})

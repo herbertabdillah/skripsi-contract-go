@@ -3,7 +3,6 @@ package contract
 import (
 	"errors"
 
-	"github.com/herbertabdillah/skripsi-contract-new/config"
 	"github.com/herbertabdillah/skripsi-contract-new/state"
 	"github.com/hyperledger-labs/cckit/router"
 )
@@ -48,7 +47,11 @@ func EndYear(c router.Context) (interface{}, error) {
 	courseYear.Status = "end"
 
 	if semester == "odd" {
-		dropOut(cc, year)
+		err = cc.Service.DroupOut(year)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return cc.Repository.UpdateCourseYear(courseYear)
@@ -74,32 +77,4 @@ func GetCourseSemester(c router.Context) (interface{}, error) {
 	id := c.ParamString("id")
 
 	return cc.Repository.GetCourseSemester(id)
-}
-
-func dropOut(cc Context, year int) error {
-	studentYear, _ := cc.Repository.GetStudentYear(year - config.MAX_STUDY_YEAR)
-
-	if studentYear == nil {
-		return nil
-	}
-
-	for _, studentId := range studentYear.StudentIds {
-		student, err := cc.Repository.GetStudent(studentId)
-		if err != nil {
-			return err
-		}
-
-		if student.Status != "active" {
-			continue
-		}
-
-		student.Status = "drop_out"
-		_, err = cc.Repository.UpdateStudent(student)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

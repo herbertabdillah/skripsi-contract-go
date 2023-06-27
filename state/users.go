@@ -14,6 +14,7 @@ type Student struct {
 	EntryYear            int    `json:"entry_year,omitempty"`
 	Status               string `json:"status,omitempty"`
 	SupervisorLecturerId string `json:"supervisor_lecturer_id,omitempty"`
+	ExitYear             int    `json:"exit_year,omitempty"`
 }
 
 type StudentYear struct {
