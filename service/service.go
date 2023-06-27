@@ -27,5 +27,4 @@ func (s Service) Updatable(year int, semester string) error {
 	} else {
 		return errors.New("Data can't updated")
 	}
-
 }

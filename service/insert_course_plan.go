@@ -9,17 +9,21 @@ import (
 )
 
 func (s Service) InsertCoursePlan(coursePlan *state.CoursePlan) (*state.CoursePlan, error) {
-	_, err := s.repository.InsertCoursePlan(coursePlan)
-	if err != nil {
+	if err := s.Updatable(coursePlan.Year, coursePlan.Semester); err != nil {
 		return nil, err
 	}
 
-	err = s.classQuotaValidation(coursePlan)
+	err := s.classQuotaValidation(coursePlan)
 	if err != nil {
 		return nil, err
 	}
 
 	err = s.creditValidation(coursePlan)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.repository.InsertCoursePlan(coursePlan)
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +35,7 @@ func (s Service) InsertCoursePlan(coursePlan *state.CoursePlan) (*state.CoursePl
 
 	return coursePlan, err
 }
+
 func (s Service) classQuotaValidation(cp *state.CoursePlan) error {
 	for _, courseSemesterId := range cp.CourseSemesterIds {
 		courseSemester, err := s.repository.GetCourseSemester(courseSemesterId)
