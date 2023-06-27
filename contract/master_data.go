@@ -6,6 +6,7 @@ import (
 )
 
 func Init(c router.Context) (interface{}, error) {
+	// appConfig := &state.ApplicationConfig{MaxStudentPerClass: 40, MaxStudyYear: 7}
 	appConfig := &state.ApplicationConfig{}
 	return appConfig, c.State().Insert("ApplicationConfig", appConfig)
 }

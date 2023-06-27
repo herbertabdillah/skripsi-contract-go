@@ -1,0 +1,5 @@
+package config
+
+var MAX_STUDENT_PER_CLASS = 40
+var MAX_STUDY_YEAR = 7
+var MAX_CREDIT_PER_SEMESTER = 24

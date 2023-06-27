@@ -20,17 +20,28 @@ func InsertCoursePlan(c router.Context) (interface{}, error) {
 	json.Unmarshal([]byte(courseSemesterIdsRaw), &courseSemesterIds)
 	coursePlan := &state.CoursePlan{Id: id, Year: year, Semester: semester, StudentId: studentId, Status: status, CourseSemesterIds: courseSemesterIds}
 
-	_, err := cc.Repository.InsertCoursePlan(coursePlan)
-	if err != nil {
-		return nil, err
-	}
+	// _, err := cc.Repository.InsertCoursePlan(coursePlan)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	_, err = generateCourseResult(cc, coursePlan)
-	if err != nil {
-		return nil, err
-	}
+	// err = classQuotaValidation(cc, coursePlan)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	return coursePlan, err
+	// err = creditValidation(cc, coursePlan)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// _, err = generateCourseResult(cc, coursePlan)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// return coursePlan, err
+	return cc.Service.InsertCoursePlan(coursePlan)
 }
 
 func UpdateCourseResult(c router.Context) (interface{}, error) {
@@ -79,25 +90,89 @@ func GetCourseResult(c router.Context) (interface{}, error) {
 	return cc.Repository.GetCourseResult(id)
 }
 
-func generateCourseResult(cc Context, cp *state.CoursePlan) (*state.CourseResult, error) {
-	result := []state.CourseSemeterResult{}
+// func classQuotaValidation(cc Context, cp *state.CoursePlan) error {
+// 	for _, courseSemesterId := range cp.CourseSemesterIds {
+// 		courseSemester, err := cc.Repository.GetCourseSemester(courseSemesterId)
+// 		if err != nil {
+// 			return err
+// 		}
 
-	for _, courseSemesterId := range cp.CourseSemesterIds {
-		courseSemester, err := cc.Repository.GetCourseSemester(courseSemesterId)
-		if err != nil {
-			return nil, err
-		}
-		csr := state.CourseSemeterResult{CourseSemesterId: courseSemesterId, Score: 0, Pass: false, CourseId: courseSemester.CourseId}
-		result = append(result, csr)
-	}
+// 		if courseSemester.StudentCount >= config.MAX_STUDENT_PER_CLASS {
+// 			return errors.New("class full")
+// 		}
 
-	courseResult := &state.CourseResult{Id: cp.Id, Year: cp.Year, Semester: cp.Semester, StudentId: cp.StudentId, CoursePlanId: cp.Id, Result: result}
-	_, err := cc.Repository.InsertCourseResult(courseResult)
-	if err != nil {
-		return nil, err
-	}
-	return courseResult, nil
-}
+// 		courseSemester.StudentCount += 1
+
+// 		_, err = cc.Repository.UpdateCourseSemester(courseSemester)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+
+// 	return nil
+// }
+
+// func creditValidation(cc Context, cp *state.CoursePlan) error {
+// 	totalCredit := 0
+// 	lastSemesterScore := 0.0
+// 	maxCredit := config.MAX_CREDIT_PER_SEMESTER
+// 	for _, courseSemesterId := range cp.CourseSemesterIds {
+// 		courseSemester, err := cc.Repository.GetCourseSemester(courseSemesterId)
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		course, err := cc.Repository.GetCourse(courseSemester.CourseId)
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		totalCredit += course.Credit
+// 	}
+
+// 	transcript, err := cc.Repository.GetTranscript(cp.StudentId)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if transcript == nil || len(transcript.TranscriptResult) == 0 {
+// 		lastSemesterScore = 4.0
+// 	} else {
+// 		lastSemesterScore = transcript.TranscriptResult[len(transcript.TranscriptResult)-1].Score
+// 	}
+
+// 	if lastSemesterScore < 3 {
+// 		maxCredit = 21
+// 	} else if lastSemesterScore < 2 {
+// 		maxCredit = 18
+// 	}
+
+// 	if totalCredit >= maxCredit {
+// 		return errors.New("credit exceed " + strconv.Itoa(totalCredit) + " max: " + strconv.Itoa(maxCredit))
+// 	}
+
+// 	return nil
+// }
+
+// func generateCourseResult(cc Context, cp *state.CoursePlan) (*state.CourseResult, error) {
+// 	result := []state.CourseSemeterResult{}
+
+// 	for _, courseSemesterId := range cp.CourseSemesterIds {
+// 		courseSemester, err := cc.Repository.GetCourseSemester(courseSemesterId)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		csr := state.CourseSemeterResult{CourseSemesterId: courseSemesterId, Score: 0, Pass: false, CourseId: courseSemester.CourseId}
+// 		result = append(result, csr)
+// 	}
+
+// 	courseResult := &state.CourseResult{Id: cp.Id, Year: cp.Year, Semester: cp.Semester, StudentId: cp.StudentId, CoursePlanId: cp.Id, Result: result}
+// 	_, err := cc.Repository.InsertCourseResult(courseResult)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return courseResult, nil
+// }
 
 func updateCourseResult(cc Context, cr *state.CourseResult, courseSemesterId string, score float64, isPass bool) (*state.CourseResult, *state.Course, error) {
 	var currentCourse *state.Course
@@ -154,20 +229,23 @@ func updateTranscript(cc Context, cr *state.CourseResult, currentCourseId string
 			found = true
 			foundIndex = i
 			foundResult = transcriptResult
+
 			foundResult.Score = score
 			foundResult.Pass = isPass
 			foundResult.CourseResultId = cr.Id
 			foundResult.Year = cr.Year
 			foundResult.Semester = cr.Semester
-		} else {
-			course, err := cc.Repository.GetCourse(transcriptResult.CourseId)
-			if err != nil {
-				return nil, err
-			}
 
-			totalTranscriptCredit += course.Credit
-			totalTranscriptScore += (float64(course.Credit) * transcriptResult.Score)
+			continue
 		}
+
+		course, err := cc.Repository.GetCourse(transcriptResult.CourseId)
+		if err != nil {
+			return nil, err
+		}
+
+		totalTranscriptCredit += course.Credit
+		totalTranscriptScore += (float64(course.Credit) * transcriptResult.Score)
 	}
 
 	if found {
@@ -176,6 +254,7 @@ func updateTranscript(cc Context, cr *state.CourseResult, currentCourseId string
 		newTranscriptResult := state.TranscriptResult{CourseResultId: cr.Id, CourseId: currentCourseId, Year: cr.Year, Semester: cr.Semester, Score: score, Pass: isPass}
 		transcript.TranscriptResult = append(transcript.TranscriptResult, newTranscriptResult)
 	}
+
 	totalTranscriptCredit += credit
 	totalTranscriptScore += (float64(credit) * score)
 

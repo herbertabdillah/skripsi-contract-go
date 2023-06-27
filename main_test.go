@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	main "github.com/herbertabdillah/skripsi-contract-new"
+	"github.com/herbertabdillah/skripsi-contract-new/config"
 	"github.com/herbertabdillah/skripsi-contract-new/state"
 	testcc "github.com/hyperledger-labs/cckit/testing"
 	expectcc "github.com/hyperledger-labs/cckit/testing/expect"
@@ -27,6 +28,8 @@ var _ = Describe(`contract`, func() {
 
 	Describe("Lifecycle", func() {
 		It("true", func() {
+			config.MAX_STUDENT_PER_CLASS = 3
+
 			var queryResponse peer.Response
 			var department state.Department
 			var student state.Student
@@ -66,6 +69,10 @@ var _ = Describe(`contract`, func() {
 			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "1", "Herbert", "11170910000046", "1", 2017, "active", "2"))
 			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "2", "Soekarno", "11100910000047", "1", 2010, "active", "2"))
 			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "3", "Natsir", "11170910000048", "1", 2017, "active", "2"))
+			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "4", "Muso", "11170910000049", "1", 2017, "active", "2"))
+			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "5", "Cokro", "11170910000050", "1", 2017, "active", "2"))
+			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "6", "Aidit", "11170910000051", "1", 2017, "active", "2"))
+			expectcc.ResponseOk(chaincode.Invoke("User:insertStudent", "7", "Kahar", "11170910000052", "1", 2017, "active", "2"))
 			queryResponse = chaincode.Query("User:getStudent", "2")
 			student = expectcc.PayloadIs(queryResponse, &state.Student{}).(state.Student)
 			Expect(student.Name).To(Equal("Soekarno"))
@@ -100,6 +107,12 @@ var _ = Describe(`contract`, func() {
 			Expect(courseSemester.CourseId).To(Equal("2"))
 
 			expectcc.ResponseOk(chaincode.Invoke("Course:insertCoursePlan", "1", "2017", "odd", "1", "approved", `["1","2","3"]`))
+
+			expectcc.ResponseOk(chaincode.Invoke("Course:insertCoursePlan", "1002", "2017", "odd", "5", "approved", `["1"]`))
+			expectcc.ResponseOk(chaincode.Invoke("Course:insertCoursePlan", "1003", "2017", "odd", "6", "approved", `["1"]`))
+			// class full
+			expectcc.ResponseError(chaincode.Invoke("Course:insertCoursePlan", "1004", "2017", "odd", "7", "approved", `["1"]`))
+
 			queryResponse = chaincode.Query("Course:getCoursePlan", "1")
 			coursePlan := expectcc.PayloadIs(queryResponse, &state.CoursePlan{}).(state.CoursePlan)
 			Expect(coursePlan.Id).To(Equal("1"))
@@ -166,6 +179,8 @@ var _ = Describe(`contract`, func() {
 			queryResponse = chaincode.Query("User:getStudent", "1")
 			student = expectcc.PayloadIs(queryResponse, &state.Student{}).(state.Student)
 			Expect(student.Status).To(Equal("graduated"))
+
+			config.MAX_STUDENT_PER_CLASS = 40
 		})
 	})
 })

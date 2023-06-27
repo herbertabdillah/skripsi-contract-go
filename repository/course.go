@@ -50,3 +50,12 @@ func (r Repository) UpdateCourseResult(obj *state.CourseResult) (*state.CourseRe
 
 	return obj, nil
 }
+
+func (r Repository) UpdateCourseSemester(obj *state.CourseSemester) (*state.CourseSemester, error) {
+	err := r.context.State().Put("CourseSemester."+obj.Id, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
