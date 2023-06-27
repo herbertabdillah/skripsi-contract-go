@@ -1,8 +1,6 @@
 package contract
 
 import (
-	"errors"
-
 	"github.com/herbertabdillah/skripsi-contract-new/state"
 	"github.com/hyperledger-labs/cckit/router"
 )
@@ -10,11 +8,6 @@ import (
 func StartYear(c router.Context) (interface{}, error) {
 	cc := NewContext(c)
 	year, semester := c.ParamInt("year"), c.ParamString("semester")
-
-	_, err := cc.Repository.GetCourseYear(year, semester)
-	if err == nil {
-		return nil, errors.New("CousreYear exist")
-	}
 
 	appConfig, err := cc.Repository.GetApplicationConfig()
 	if err != nil {

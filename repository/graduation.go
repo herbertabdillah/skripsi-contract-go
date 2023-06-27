@@ -22,3 +22,12 @@ func (r Repository) UpdateTranscript(obj *state.Transcript) (*state.Transcript, 
 
 	return obj, nil
 }
+
+func (r Repository) InsertTranscript(obj *state.Transcript) (*state.Transcript, error) {
+	err := r.context.State().Insert("Transcript."+obj.Id, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}

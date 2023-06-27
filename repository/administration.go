@@ -7,16 +7,6 @@ import (
 	"github.com/herbertabdillah/skripsi-contract-new/state"
 )
 
-func (r Repository) GetApplicationConfig() (*state.ApplicationConfig, error) {
-	res, err := r.context.State().Get("ApplicationConfig", &state.ApplicationConfig{})
-	if err != nil {
-		return nil, err
-	}
-	obj := res.(state.ApplicationConfig)
-
-	return &obj, nil
-}
-
 func (r Repository) GetCourseYear(year int, semester string) (*state.CourseYear, error) {
 	semesterNumber := lib.SemesterNumber(semester)
 
