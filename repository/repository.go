@@ -3,6 +3,7 @@ package repository
 import (
 	"strconv"
 
+	"github.com/herbertabdillah/skripsi-contract-new/lib"
 	"github.com/herbertabdillah/skripsi-contract-new/state"
 	"github.com/hyperledger-labs/cckit/router"
 )
@@ -26,12 +27,7 @@ func (r Repository) GetApplicationConfig() (*state.ApplicationConfig, error) {
 }
 
 func (r Repository) GetCourseYear(year int, semester string) (*state.CourseYear, error) {
-	var semesterNumber int
-	if semester == "even" {
-		semesterNumber = 1
-	} else {
-		semesterNumber = 2
-	}
+	semesterNumber := lib.SemesterNumber(semester)
 
 	key := "CourseYear." + strconv.Itoa(year) + strconv.Itoa(semesterNumber)
 	res, err := r.context.State().Get(key, &state.CourseYear{})
@@ -50,6 +46,15 @@ func (r Repository) GetCourseSemester(id string) (*state.CourseSemester, error) 
 	obj := res.(state.CourseSemester)
 
 	return &obj, nil
+}
+
+func (r Repository) InsertCourseSemester(obj *state.CourseSemester) (*state.CourseSemester, error) {
+	err := r.context.State().Insert("CourseSemester."+obj.Id, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func (r Repository) GetCourseResult(id string) (*state.CourseResult, error) {
@@ -167,12 +172,7 @@ func (r Repository) UpdateApplicationConfig(obj *state.ApplicationConfig) (*stat
 }
 
 func (r Repository) UpdateCourseYear(obj *state.CourseYear) (*state.CourseYear, error) {
-	var semesterNumber int
-	if obj.Semester == "even" {
-		semesterNumber = 1
-	} else {
-		semesterNumber = 2
-	}
+	semesterNumber := lib.SemesterNumber(obj.Semester)
 
 	key := "CourseYear." + strconv.Itoa(obj.Year) + strconv.Itoa(semesterNumber)
 	err := r.context.State().Put(key, obj)
@@ -184,15 +184,11 @@ func (r Repository) UpdateCourseYear(obj *state.CourseYear) (*state.CourseYear, 
 }
 
 func (r Repository) InsertCourseYear(obj *state.CourseYear) (*state.CourseYear, error) {
-	var semesterNumber int
-	if obj.Semester == "even" {
-		semesterNumber = 1
-	} else {
-		semesterNumber = 2
-	}
-
+	semesterNumber := lib.SemesterNumber(obj.Semester)
 	key := "CourseYear." + strconv.Itoa(obj.Year) + strconv.Itoa(semesterNumber)
+
 	err := r.context.State().Insert(key, obj)
+
 	if err != nil {
 		return nil, err
 	}

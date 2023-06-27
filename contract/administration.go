@@ -2,7 +2,6 @@ package contract
 
 import (
 	"errors"
-	"strconv"
 
 	"github.com/herbertabdillah/skripsi-contract-new/state"
 	"github.com/hyperledger-labs/cckit/router"
@@ -55,31 +54,25 @@ func EndYear(c router.Context) (interface{}, error) {
 }
 
 func GetCourseYear(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	year, semester := c.ParamInt("year"), c.ParamString("semester")
 
-	var semesterNumber int
-	if semester == "even" {
-		semesterNumber = 1
-	} else {
-		semesterNumber = 2
-	}
-
-	key := "CourseYear." + strconv.Itoa(year) + strconv.Itoa(semesterNumber)
-
-	return c.State().Get(key, &state.CourseYear{})
+	return cc.Repository.GetCourseYear(year, semester)
 }
 
 func InsertCourseSemester(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	id, year, semester, courseId, lecturerId := c.ParamString("id"), c.ParamInt("year"), c.ParamString("semester"), c.ParamString("courseId"), c.ParamString("lecturerId")
 	courseSemester := &state.CourseSemester{Id: id, Year: year, Semester: semester, CourseId: courseId, LecturerId: lecturerId}
 
-	return courseSemester, c.State().Insert("CourseSemester."+id, courseSemester)
+	return cc.Repository.InsertCourseSemester(courseSemester)
 }
 
 func GetCourseSemester(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	id := c.ParamString("id")
 
-	return c.State().Get("CourseSemester."+id, &state.CourseSemester{})
+	return cc.Repository.GetCourseSemester(id)
 }
 
 func dropOut(cc Context, year int) error {
