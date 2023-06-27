@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strconv"
+
 	"github.com/herbertabdillah/skripsi-contract-new/state"
 	"github.com/hyperledger-labs/cckit/router"
 )
@@ -23,6 +25,23 @@ func (r Repository) GetApplicationConfig() (*state.ApplicationConfig, error) {
 	return &obj, nil
 }
 
+func (r Repository) GetCourseYear(year int, semester string) (*state.CourseYear, error) {
+	var semesterNumber int
+	if semester == "even" {
+		semesterNumber = 1
+	} else {
+		semesterNumber = 2
+	}
+
+	key := "CourseYear." + strconv.Itoa(year) + strconv.Itoa(semesterNumber)
+	res, err := r.context.State().Get(key, &state.CourseYear{})
+	if err != nil {
+		return nil, err
+	}
+	obj := res.(state.CourseYear)
+
+	return &obj, nil
+}
 func (r Repository) GetCourseSemester(id string) (*state.CourseSemester, error) {
 	res, err := r.context.State().Get("CourseSemester."+id, &state.CourseSemester{})
 	if err != nil {
@@ -73,6 +92,26 @@ func (r Repository) GetTranscript(id string) (*state.Transcript, error) {
 	return &obj, nil
 }
 
+func (r Repository) GetStudent(id string) (*state.Student, error) {
+	res, err := r.context.State().Get("Student."+id, &state.Student{})
+	if err != nil {
+		return nil, err
+	}
+	obj := res.(state.Student)
+
+	return &obj, nil
+}
+
+func (r Repository) GetStudentYear(year int) (*state.StudentYear, error) {
+	res, err := r.context.State().Get("StudentYear."+strconv.Itoa(year), &state.StudentYear{})
+	if err != nil {
+		return nil, err
+	}
+	obj := res.(state.StudentYear)
+
+	return &obj, nil
+}
+
 func (r Repository) InsertCoursePlan(obj *state.CoursePlan) (*state.CoursePlan, error) {
 	err := r.context.State().Insert("CoursePlan."+obj.Id, obj)
 	if err != nil {
@@ -91,6 +130,15 @@ func (r Repository) InsertCourseResult(obj *state.CourseResult) (*state.CourseRe
 	return obj, nil
 }
 
+func (r Repository) UpdateStudent(obj *state.Student) (*state.Student, error) {
+	err := r.context.State().Put("Student."+obj.Id, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
 func (r Repository) UpdateCourseResult(obj *state.CourseResult) (*state.CourseResult, error) {
 	err := r.context.State().Put("CourseResult."+obj.Id, obj)
 	if err != nil {
@@ -102,6 +150,49 @@ func (r Repository) UpdateCourseResult(obj *state.CourseResult) (*state.CourseRe
 
 func (r Repository) UpdateTranscript(obj *state.Transcript) (*state.Transcript, error) {
 	err := r.context.State().Put("Transcript."+obj.Id, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+func (r Repository) UpdateApplicationConfig(obj *state.ApplicationConfig) (*state.ApplicationConfig, error) {
+	err := r.context.State().Put("ApplicationConfig", obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+func (r Repository) UpdateCourseYear(obj *state.CourseYear) (*state.CourseYear, error) {
+	var semesterNumber int
+	if obj.Semester == "even" {
+		semesterNumber = 1
+	} else {
+		semesterNumber = 2
+	}
+
+	key := "CourseYear." + strconv.Itoa(obj.Year) + strconv.Itoa(semesterNumber)
+	err := r.context.State().Put(key, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+func (r Repository) InsertCourseYear(obj *state.CourseYear) (*state.CourseYear, error) {
+	var semesterNumber int
+	if obj.Semester == "even" {
+		semesterNumber = 1
+	} else {
+		semesterNumber = 2
+	}
+
+	key := "CourseYear." + strconv.Itoa(obj.Year) + strconv.Itoa(semesterNumber)
+	err := r.context.State().Insert(key, obj)
 	if err != nil {
 		return nil, err
 	}

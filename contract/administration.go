@@ -9,53 +9,38 @@ import (
 )
 
 func StartYear(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	year, semester := c.ParamInt("year"), c.ParamString("semester")
 
-	var semesterNumber int
-	if semester == "even" {
-		semesterNumber = 1
-	} else {
-		semesterNumber = 2
-	}
-
-	_, err := c.State().Get("CourseYear."+strconv.Itoa(year)+strconv.Itoa(semesterNumber), &state.CourseYear{})
+	_, err := cc.Repository.GetCourseYear(year, semester)
 	if err == nil {
 		return nil, errors.New("CousreYear exist")
 	}
 
-	appConfigRes, err := c.State().Get("ApplicationConfig", &state.ApplicationConfig{})
+	appConfig, err := cc.Repository.GetApplicationConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	appConfig := appConfigRes.(state.ApplicationConfig)
 	appConfig.Semester = semester
 	appConfig.Year = year
 
-	err2 := c.State().Put("ApplicationConfig", appConfig)
+	_, err = cc.Repository.UpdateApplicationConfig(appConfig)
 
-	if err2 != nil {
-		return nil, err2
+	if err != nil {
+		return nil, err
 	}
 
 	courseYear := &state.CourseYear{Year: year, Semester: semester, Status: "start"}
-	return courseYear, c.State().Insert("CourseYear."+strconv.Itoa(year)+strconv.Itoa(semesterNumber), courseYear)
+
+	return cc.Repository.InsertCourseYear(courseYear)
 }
 
 func EndYear(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	year, semester := c.ParamInt("year"), c.ParamString("semester")
 
-	var semesterNumber int
-	if semester == "even" {
-		semesterNumber = 1
-	} else {
-		semesterNumber = 2
-	}
-
-	key := "CourseYear." + strconv.Itoa(year) + strconv.Itoa(semesterNumber)
-
-	res, err := c.State().Get(key, &state.CourseYear{})
-	courseYear := res.(state.CourseYear)
+	courseYear, err := cc.Repository.GetCourseYear(year, semester)
 	if err != nil {
 		return nil, err
 	}
@@ -63,24 +48,10 @@ func EndYear(c router.Context) (interface{}, error) {
 	courseYear.Status = "end"
 
 	if semester == "odd" {
-		studentYearRes, _ := c.State().Get("StudentYear."+strconv.Itoa(year-7), &state.StudentYear{})
-		if studentYearRes != nil {
-			studentYear := studentYearRes.(state.StudentYear)
-			for _, studentId := range studentYear.StudentIds {
-				studentRes, err := c.State().Get("Student."+studentId, &state.Student{})
-				if err != nil {
-					return nil, err
-				}
-				student := studentRes.(state.Student)
-				if student.Status == "active" {
-					student.Status = "drop_out"
-					c.State().Put("Student."+studentId, student)
-				}
-			}
-		}
+		dropOut(cc, year)
 	}
 
-	return courseYear, c.State().Put(key, courseYear)
+	return cc.Repository.UpdateCourseYear(courseYear)
 }
 
 func GetCourseYear(c router.Context) (interface{}, error) {
@@ -109,4 +80,32 @@ func GetCourseSemester(c router.Context) (interface{}, error) {
 	id := c.ParamString("id")
 
 	return c.State().Get("CourseSemester."+id, &state.CourseSemester{})
+}
+
+func dropOut(cc Context, year int) error {
+	studentYear, _ := cc.Repository.GetStudentYear(year - 7)
+
+	if studentYear == nil {
+		return nil
+	}
+
+	for _, studentId := range studentYear.StudentIds {
+		student, err := cc.Repository.GetStudent(studentId)
+		if err != nil {
+			return err
+		}
+
+		if student.Status != "active" {
+			continue
+		}
+
+		student.Status = "drop_out"
+		_, err = cc.Repository.UpdateStudent(student)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
