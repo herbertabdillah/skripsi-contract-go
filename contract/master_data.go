@@ -5,6 +5,11 @@ import (
 	"github.com/hyperledger-labs/cckit/router"
 )
 
+func Init(c router.Context) (interface{}, error) {
+	appConfig := &state.ApplicationConfig{}
+	return appConfig, c.State().Insert("ApplicationConfig", appConfig)
+}
+
 func GetFaculty(c router.Context) (interface{}, error) {
 	var id = c.ParamString("id")
 

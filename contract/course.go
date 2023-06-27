@@ -9,12 +9,18 @@ import (
 )
 
 func InsertCoursePlan(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	id, year, semester, studentId, status, courseSemesterIdsRaw := c.ParamString("id"), c.ParamInt("year"), c.ParamString("semester"), c.ParamString("studentId"), c.ParamString("status"), c.ParamString("courseSemesterIds")
+
+	if err := cc.Service.Updatable(year, semester); err != nil {
+		return nil, err
+	}
+
 	courseSemesterIds := []string{}
 	json.Unmarshal([]byte(courseSemesterIdsRaw), &courseSemesterIds)
 	coursePlan := &state.CoursePlan{Id: id, Year: year, Semester: semester, StudentId: studentId, Status: status, CourseSemesterIds: courseSemesterIds}
 
-	var err = c.State().Insert("CoursePlan."+id, coursePlan)
+	_, err := cc.Repository.InsertCoursePlan(coursePlan)
 	if err != nil {
 		return nil, err
 	}
@@ -22,8 +28,7 @@ func InsertCoursePlan(c router.Context) (interface{}, error) {
 	result := []state.CourseSemeterResult{}
 
 	for _, courseSemesterId := range courseSemesterIds {
-		courseSemesterRes, err := c.State().Get("CourseSemester."+courseSemesterId, &state.CourseSemester{})
-		courseSemester := courseSemesterRes.(state.CourseSemester)
+		courseSemester, err := cc.Repository.GetCourseSemester(courseSemesterId)
 		if err != nil {
 			return nil, err
 		}
@@ -32,26 +37,25 @@ func InsertCoursePlan(c router.Context) (interface{}, error) {
 	}
 
 	courseResult := &state.CourseResult{Id: id, Year: year, Semester: semester, StudentId: studentId, CoursePlanId: id, Result: result}
-	err = c.State().Insert("CourseResult."+id, courseResult)
+	_, err = cc.Repository.InsertCourseResult(courseResult)
 
 	return coursePlan, err
 }
 
 func UpdateCourseResult(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	var err error
 	courseSemesterId, courseResultId, scoreStr := c.ParamString("courseSemesterId"), c.ParamString("courseResultId"), c.ParamString("score")
 	score, _ := strconv.ParseFloat(scoreStr, 64)
-	result, err := c.State().Get("CourseResult."+courseResultId, &state.CourseResult{})
+	courseResult, err := cc.Repository.GetCourseResult(courseResultId)
 	if err != nil {
 		return nil, err
 	}
-	courseResult := result.(state.CourseResult)
 	totalScore := 0.0
 	totalCredit := 0
 	isPass := false
 	var currentCourseId string
 	var currentCredit int
-	// var course state.Course
 	for i, courseSemesterResult := range courseResult.Result {
 		if courseSemesterResult.CourseSemesterId == courseSemesterId {
 			currentCourseId = courseSemesterResult.CourseId
@@ -64,16 +68,15 @@ func UpdateCourseResult(c router.Context) (interface{}, error) {
 			}
 			courseResult.Result[i] = courseSemesterResult
 		}
-		courseSemesterRes, err := c.State().Get("CourseSemester."+courseSemesterResult.CourseSemesterId, &state.CourseSemester{})
+		courseSemester, err := cc.Repository.GetCourseSemester(courseSemesterResult.CourseSemesterId)
 		if err != nil {
 			return nil, err
 		}
-		courseSemester := courseSemesterRes.(state.CourseSemester)
-		courseRes, err := c.State().Get("Course."+courseSemester.CourseId, &state.Course{})
+
+		course, err := cc.Repository.GetCourse(courseSemester.CourseId)
 		if err != nil {
 			return nil, err
 		}
-		course := courseRes.(state.Course)
 
 		if courseSemesterResult.CourseSemesterId == courseSemesterId {
 			currentCredit = course.Credit
@@ -84,11 +87,10 @@ func UpdateCourseResult(c router.Context) (interface{}, error) {
 	resultScore := totalScore / float64(totalCredit)
 	courseResult.Score = resultScore
 
-	transcriptRes, err := c.State().Get("Transcript."+courseResult.StudentId, &state.Transcript{})
+	transcript, err := cc.Repository.GetTranscript(courseResult.StudentId)
 	if err != nil {
 		return nil, err
 	}
-	transcript := transcriptRes.(state.Transcript)
 
 	found := false
 	totalTranscriptScore := 0.0
@@ -96,7 +98,6 @@ func UpdateCourseResult(c router.Context) (interface{}, error) {
 	foundIndex := -1
 	var foundResult state.TranscriptResult
 	for i, transcriptResult := range transcript.TranscriptResult {
-		// totalTranscriptScore += float64(transcriptResult.Score)
 		if transcriptResult.CourseId == currentCourseId {
 			found = true
 			foundIndex = i
@@ -107,11 +108,10 @@ func UpdateCourseResult(c router.Context) (interface{}, error) {
 			foundResult.Year = courseResult.Year
 			foundResult.Semester = courseResult.Semester
 		} else {
-			courseRes, err := c.State().Get("Course."+transcriptResult.CourseId, &state.Course{})
+			course, err := cc.Repository.GetCourse(transcriptResult.CourseId)
 			if err != nil {
 				return nil, err
 			}
-			course := courseRes.(state.Course)
 
 			totalTranscriptCredit += course.Credit
 			totalTranscriptScore += (float64(course.Credit) * transcriptResult.Score)
@@ -129,22 +129,24 @@ func UpdateCourseResult(c router.Context) (interface{}, error) {
 
 	transcript.Score = totalTranscriptScore / float64(totalTranscriptCredit)
 
-	err = c.State().Put("Transcript."+courseResult.StudentId, transcript)
+	_, err = cc.Repository.UpdateTranscript(transcript)
 	if err != nil {
 		return nil, err
 	}
 
-	return courseResult, c.State().Put("CourseResult."+courseResultId, courseResult)
+	return cc.Repository.UpdateCourseResult(courseResult)
 }
 
 func GetCoursePlan(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	id := c.ParamString("id")
 
-	return c.State().Get("CoursePlan."+id, &state.CoursePlan{})
+	return cc.Repository.GetCoursePlan(id)
 }
 
 func GetCourseResult(c router.Context) (interface{}, error) {
+	cc := NewContext(c)
 	id := c.ParamString("id")
 
-	return c.State().Get("CourseResult."+id, &state.CourseResult{})
+	return cc.Repository.GetCourseResult(id)
 }

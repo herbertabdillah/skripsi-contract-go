@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/herbertabdillah/skripsi-contract-new/contract"
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/router/param"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
 func NewCC() *router.Chaincode {
@@ -15,6 +18,7 @@ func NewCC() *router.Chaincode {
 
 	r.
 		// Master data
+		Invoke(`MasterData:init`, contract.Init).
 		Query(`MasterData:getFaculty`, contract.GetFaculty, param.String("id")).
 		Invoke(`MasterData:insertFaculty`, contract.CreateFaculty, param.String("id"), param.String("name")).
 		Query(`MasterData:getDepartment`, contract.GetDepartment, param.String("id")).
@@ -42,4 +46,10 @@ func NewCC() *router.Chaincode {
 		Query(`Graduation:graduate`, contract.Graduate, param.String("id"))
 
 	return router.NewChaincode(r)
+}
+
+func main() {
+	if err := shim.Start(NewCC()); err != nil {
+		fmt.Printf("Error starting hello world chaincode: %s", err)
+	}
 }

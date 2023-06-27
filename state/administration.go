@@ -1,5 +1,10 @@
 package state
 
+type ApplicationConfig struct {
+	Year     int    `json:"id,omitempty"`
+	Semester string `json:"semester,omitempty"`
+}
+
 type CourseYear struct {
 	Year     int    `json:"id,omitempty"`
 	Semester string `json:"semester,omitempty"`

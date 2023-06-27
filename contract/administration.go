@@ -23,6 +23,21 @@ func StartYear(c router.Context) (interface{}, error) {
 		return nil, errors.New("CousreYear exist")
 	}
 
+	appConfigRes, err := c.State().Get("ApplicationConfig", &state.ApplicationConfig{})
+	if err != nil {
+		return nil, err
+	}
+
+	appConfig := appConfigRes.(state.ApplicationConfig)
+	appConfig.Semester = semester
+	appConfig.Year = year
+
+	err2 := c.State().Put("ApplicationConfig", appConfig)
+
+	if err2 != nil {
+		return nil, err2
+	}
+
 	courseYear := &state.CourseYear{Year: year, Semester: semester, Status: "start"}
 	return courseYear, c.State().Insert("CourseYear."+strconv.Itoa(year)+strconv.Itoa(semesterNumber), courseYear)
 }

@@ -30,6 +30,7 @@ var _ = Describe(`contract`, func() {
 			var queryResponse peer.Response
 			var department state.Department
 			var student state.Student
+			expectcc.ResponseOk(chaincode.Invoke("MasterData:init"))
 			expectcc.ResponseOk(chaincode.Invoke("MasterData:insertFaculty", "1", "Sains dan Teknologi"))
 			queryResponse = chaincode.Query("MasterData:getFaculty", "1")
 			faculty := expectcc.PayloadIs(queryResponse, &state.Faculty{}).(state.Faculty)
