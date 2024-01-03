@@ -1,4 +1,4 @@
-package main_test
+package contract_test
 
 import (
 	"testing"
@@ -19,9 +19,11 @@ func TestLifecycleEndToEnd(t *testing.T) {
 }
 
 var _ = Describe(`Lifecycle End to End (from master data to graduation)`, func() {
-	chaincode := testcc.NewMockStub(`contract`, contract.NewCC())
+	var chaincode *testcc.MockStub
 
 	It("run as expected", func() {
+		chaincode = testcc.NewMockStub(`contract`, contract.NewCC())
+
 		config.MAX_STUDENT_PER_CLASS = 3
 		expectcc.ResponseOk(chaincode.Init())
 
